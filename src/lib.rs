@@ -38,7 +38,9 @@ pub enum Align {
     Centre,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Debug)]
+#[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "json", serde(rename_all = "lowercase"))]
 pub enum Cell<'a, 'g> {
     #[default]
     Empty,
@@ -64,6 +66,13 @@ impl<'a, 'g> Cell<'a, 'g> {
         S: Into<Cow<'a, str>>,
     {
         Cell::Anchored(s.into(), idx)
+    }
+
+    #[cfg(feature = "json")]
+    pub fn from_json(json_string: &'a str) -> serde_json::Result<Cell<'a, 'a>> {
+        let cell: Cell = serde_json::from_str(json_string)?;
+
+        Ok(cell.into())
     }
 }
 
@@ -361,16 +370,10 @@ fn pad(n: usize) -> impl Display {
 }
 
 fn longer<'a>(s1: &'a str, s2: &'a str) -> &'a str {
-    if s1.width() >= s2.width() {
-        s1
-    } else {
-        s2
-    }
+    if s1.width() >= s2.width() { s1 } else { s2 }
 }
 
 mod conversions;
-#[cfg(feature = "json")]
-mod json;
 #[cfg(feature = "num-bigint")]
 mod num_bigint;
 #[cfg(feature = "psv")]
